@@ -1,1 +1,56 @@
 java核心技术笔记
+对象
+使用面向对象时  清楚三个主要的特性
+1.对象的行为
+2.对象的状态
+3.对象的标识
+
+类之间的关系
+依赖 use-a   聚合 has-a  继承 is-a
+使用构造器构造新的实例
+
+final 关键字
+实例域定义为final 构建对象时必须初始这样的域
+
+static 关键字
+静态方法 是一种不能向对象实施操作的方法
+main方法 也是一个静态方法
+
+代理
+静态代理 和 动态代理
+静态代理： 即在编译前确定接口 被代理类 代理类等等
+动态代理：代理类在程序运行的过程中创建
+
+异常
+异常分类
+java中异常派生自throwable类 error 和 exception 这两类成为非受查异常
+error为运行时系统内部错误和资源耗尽等错误  终止运行
+exception 分为 RunTimeException 和 其他异常
+RunTimeException ： 错误的类型转换  数组访问越界 空指针异常
+其他异常：试图打开不存在的文件 根据指定的字符串查找class对象 而这个类并不存在
+项目中避免使用 printStackTrace 主要是避免影响业务方的性能
+对可能存在异常进行catch 避免抛出异常对业务方应用造成影响
+
+博客文章 G1垃圾回收器
+java 9 中的默认垃圾回收器
+新生代采取复制算法 的收集器 serial parallel new  parallel Scavenge
+serial 单线程收集器 串行方式运行 gc进行时 stw 其他线程都会停止 单核下收集效率最高
+parallel new s的多线程版本 新生代默认收集器 多核情况下效率高  可以跟cms收集器配合使用
+parallel scavenage 多线程收集器 更注重吞吐量 适合交互少的任务 无法和cms配合使用
+
+老年代
+serial old 标记整理算法 单线程收集
+parallel old 标记整理算法 可以和parallel scavenge配合使用
+cms concurrent mark sweep 标记清楚算法  收集线程可以和用线程一起工作
+cms缺点 吞吐低 浮动垃圾  并产生大量的内存碎片  并发模式失败会切换到serial old模式
+
+G1 划分region 而不是物理隔离为新生代和老年代适合多核和大内存的场景  新生代使用复制算法  老年代使用标记整理算法
+
+object对象
+clone方法 protected修饰 默认为浅克隆 若未实现接口 调用时抛出异常
+
+linkedlist
+get方法 检查index是否越界 对index进行判断 根据判断结果决定开始遍历的位置
+
+hashmap
+建树阈值7 则将链表重构造为红黑树
