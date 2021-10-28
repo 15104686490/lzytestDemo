@@ -45,3 +45,120 @@ stop方法的问题
 
 线程中断
 并不是强行立即退出  而是发出一个通知  告知目标线程 希望退出 目标线程接到通知后 自行决定
+
+ReadWriteLock
+读写锁  读写操作分离  减少锁竞争
+读之间不阻塞  但读写  写写之间仍然是阻塞的
+读操作较多 可以考虑使用读写锁
+
+CountDownLatch
+倒计数器
+await 等待方法
+
+CyclicBarrier
+实现线程间的计数等待 可反复使用
+可以通过参数指定计数完成后  执行的动作
+
+LockSupport
+线程阻塞工具 park可以阻塞当前线程
+
+Guava 和 RateLimiter限流
+暂时未看
+
+线程池
+线程池类型
+newFixThreadPool
+固定线程数量的线程池 无空闲线程时任务暂存在任务队列中
+newSingleThreadExcutor
+只包含一个线程的线程池
+newCachedThreadPool
+可根据实际情况调整线程数量的线程池
+newSingleThreadScheduledExecutor
+线程池的大小为1  增加了给定时间执行某任务的功能
+newScheduledThreadPool
+可指定线程数量
+
+ThreadPoolExecutor
+参数
+corePoolSize 核心线程数 指定线程池中的线程数量
+maximumPoolSize 指定线程池中的最大线程数
+keepLiveTime 线程池数量超过核心线程数  空闲线程的存活时间
+uint  存活时间的单位
+workQueue 任务队列 提交但尚未执行任务的存储  BlockingQueue对象
+    直接提交队列SynchronousQueue 每一个插入操作都需要等待删除操作
+    有界队列
+    无界队列  如果处理速度差距较大  可能会产生内存问题
+    优先任务队列 priorityBlockingQueue
+threadFactory 线程工厂 创建线程
+handler 拒绝策略  任务过多来不及处理时的处理策略
+    AbortPolicy 抛出异常 阻止继续执行
+    CallerRunsPolicy 直接在调用者线程中执行此任务  不会真丢弃任务 但会影响提交线程的性能
+    DiscardOldestPolicy 丢弃最老的一个请求  并尝试再次提交当前的任务
+    DiscardPolicy 丢弃无法处理的任务 不进行处理
+可通过 RejectExecutionHandler接口实现来自定义策略
+
+Thread自定义线程创建
+
+优化线程池线程数量
+考虑CPU数量 内存大小 工作类型
+
+fork/join
+分治策略 完成任务的线程窃取其他线程的任务继续执行
+线程数量多 导致性能下降  调用层数多
+
+并发容器
+ConcurrentHashMap 并发HashMap
+方法一 使用Collections.synchronizedMap 获取SynchronizedMap 对各类操作都进行了加锁同步
+虽然解决了线程安全的要求  但性能表现不算好
+
+CopayOnWriteArrayList 适用于读多写少的场景
+读操作完全不加锁 同时写入操作不会阻塞读操作 只有写入之间会需要进行同步等待
+写入操作 不直接修改原有的内容 而是将修改内容写入到副本中 操作完成后 再用修改后的副本替换原来的数据
+
+ConcurrentLinkedQueue 并发队列  适用链表实现  并发版linkedList
+操作node时 使用cas
+
+BlockingQueue 阻塞队列
+压入元素可以使用offer 和 put方法 其中offer方法如果当前队列已经满了 会立即返回false
+而put方法 如果队列满了则会一直等待空闲位置
+取元素的方法poll和take 如当前队列为空那么 poll会直接返回null take方法则会等待队列中的元素
+利用锁和条件来实现 take和put
+
+ConcurrentSkipListMap
+跳表实现的map和哈希实现的map的区别是  跳表内的元素是有序的  而哈希不会保存元素的顺序
+对node操作使用cas方法
+
+测试和框架jmh
+
+有助于提高锁性能的方法
+减少锁的持有时间
+减少锁的粒度
+缩小锁定对象范围 降低锁冲突的可能性 提高并发能力
+问题：获取全局资源时可能需要获取所有的锁
+使用读写分离锁来替换独占锁
+锁分离
+锁粗化
+虚拟机遇到连续的对同一个锁进行请求和释放操作时  会把所有的锁操作整合成对锁的一次请求 从而减少请求次数
+需要根据实际情况进行权衡
+
+锁优化
+锁偏向
+一个线程获得锁后  锁即进入偏向模式 当此线程再次请求锁时不再需要进行同步操作
+通过参数控制是否开启此机制 -XX：+UserBiasedLocking
+轻量级锁
+对象头作为指针指向持有锁的线程堆栈的内部  判断是否持有锁对象  类似cas机制
+自旋锁
+
+锁消除
+虚拟机在jit编译 通过上下文的扫描  去除不可能存在共享资源竞争的锁  省去请求锁的时间
+逃逸分析
+
+threadlocal
+共享与隔离
+类似于map  key为当前线程 存储该线程独有的数据 各个线程间互不干扰
+线程退出时会 thread类会进行清理工作  其中包括清理ThreadLocalMap
+TTL
+
+
+
+
