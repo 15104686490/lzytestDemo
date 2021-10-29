@@ -157,7 +157,96 @@ threadlocal
 共享与隔离
 类似于map  key为当前线程 存储该线程独有的数据 各个线程间互不干扰
 线程退出时会 thread类会进行清理工作  其中包括清理ThreadLocalMap
+使用线程池 线程未必会退出 而是被回收  因此如果一些大对象添加在ThreadLocal中  可能会出现内存泄漏的可能
+可调用remove方法清理变量  防止内存泄漏
+
+乐观和悲观
+锁是一种悲观的策略  假想每一次临界区操作都会产生冲突
+无锁则是一种乐观的策略 假想没有冲突  即不需要等待
+无锁策略使用cas compare and swap 来鉴别线程间的冲突
+cas包含三个参数 V要更新的变量 E预期值 N新值
+
+AtomicInteger
+所有的修改操作都是使用cas指令进行的
+
+Unsafe类
+封装了一些类似指针的操作
+无法自行使用这个类  需要调用其获取实例的方法
+
+AtomminRefernce
+无锁的对象引用 对普通对象的引用
+
+AtomicStampedRefernce
+带有时间戳
+修改时对象值和时间戳都必须满足期望值 方能写入成功
+参数中包含预期的时间戳
+
+AtomicIntegerArray
+无锁数组
+
+AtomicIntegerFieldUpdater
+普通变量使用原子操作
+注意：
+需为可见范围内的变量 如private是不被允许的
+需为volatile类型的
+cas操作会通过对象实例中的偏移量直接进行赋值 不支持static字段
+
+无锁vector
+LockFreeVector
+
+SynchronousQueue
+
+死锁
+线程间相互占用对方所需资源 且都不进行释放 导致出现相互等待资源释放的操作 出现无限制等待
+
+单例模式
+几种写法
+
+不可变模式
+final  即创建后不可在修改其内容
+典型代表String  元数据类  包装类
+
+生产者消费者
+缓冲区
+对生产者和消费者线程进行解耦  优化系统整体结构 且由于存在缓冲区允许生产者和消费者线程存在执行上的性能差异
+
+Disruptor
+无锁环形队列
+提供策略对队列中的数据进行监控
+BlockingWaitStrategy 默认策略好blockingQueue类似 使用锁和条件监控数据和线程的唤醒
+SleepWaitStrategy 先自旋等待 不成功则yeild让出cpu 可能会产生高延迟 好处是对生产者的影响较小
+YieldingWaitStrategy 适用于低延时的场景
+BusySoinWaitStrategy
+
+CPU Cache优化
+
+Future模式
+异步调用 即调用者立即返回 后台慢慢继续执行 而调用者则可以先处理其他的一些任务
+当真正需要数据的场合在去尝试获取需要的数据
+Client Data FuterwData RealData
+jdk中 RunnableFutere 集成Future和Runnable两个接口
+FutureTask 调用Callable完成实际数据的组装工作
+
+并行搜索
+分割后并行执行
+并行排序
+暂时跳过
+
+NIO new IO
+channel buffer
+
+AIO
+
+函数编程
+显示函数
+指函数与外界交换数据的唯一渠道就是参数和返回值
+隐式函数 除此之外  还会读取外部信息 或  修改外部信息
+
+
+
+
 TTL
+
 
 
 

@@ -30,6 +30,7 @@ public class SemaphoreDemo implements Runnable {
     public static void main(String[] args) {
         Semaphore semaphore = new Semaphore(3);
         ConcurrentHashMap concurrentHashMap = new ConcurrentHashMap();
+
         concurrentHashMap.size();
         for (int i = 0; i < 10; i++) {
             new Thread(new SemaphoreDemo(i, semaphore)).start();

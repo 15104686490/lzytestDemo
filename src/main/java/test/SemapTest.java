@@ -9,6 +9,7 @@ public class SemapTest implements Runnable {
 
     public static void main(String[] args) {
         ExecutorService executorService = Executors.newFixedThreadPool(20);
+        Thread thread = new Thread();
         final SemapTest semapTest = new SemapTest();
         for (int i = 0; i < 20; i++) {
             executorService.submit(semapTest);
