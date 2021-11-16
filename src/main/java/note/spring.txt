@@ -1,0 +1,23 @@
+XmlBeanDefinitionReader中读取xml配置文件的流程
+1.使用ResourLoader将源文件路径转换为对应的resource文件
+2.通过DocumentLoader进行转换  转换为Document文件
+3.对Document进行解析
+loadBeanDefinitions方法 ：
+获取xml文件的验证
+加载xml文件 得到对应的document
+根据返回的document注册bean
+dtd和xsd
+dtd一种xml约束模式语言 验证机制 保证格式正确有效
+xsd xml schema描述了xml文档的结构 可以指定一个xml schema来验证某个xml文档  检查是否符合要求
+
+entityResolver
+作用是项目本身可以提供一个如何寻找dtd声明的方法 即由程序来实现寻找dtd声明的过程
+
+doRegisterBeanDefinitions root
+进行解析
+profile解析
+parseBeanDefinitions 读取xml
+调用不同的方法进行处理
+默认的命名空间 parseDefaultElement进行解析
+针对不同的标签进行处理
+自定义采用custom
