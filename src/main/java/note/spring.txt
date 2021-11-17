@@ -20,4 +20,38 @@ parseBeanDefinitions 读取xml
 调用不同的方法进行处理
 默认的命名空间 parseDefaultElement进行解析
 针对不同的标签进行处理
+对bean标签的处理
+1.首先使用BeanDefinitionDelegate类的parseBeanDefinitionElement方法进行元素解析
+得到的BeanDefinitionHolder类型中包含配置文件中的属性
+  1.解析提取id  name等属性
+  创建承载各种属性的实例 classLoader不为空 则使用以传入的loader同一虚拟机加载对象 否则只是记录className
+  解析各种属性 parseBeanDefinitionAttributes对element所有的元素属性进行解析
+  解析子元素meta 额外的声明
+  解析子元素lookup-method 获取器注入 一种特殊的方法注入 把一个方法声明为返回某种类型的bean 但实际要返回的bean是在配置文件中配置的
+  获取要修饰的方法 并重写
+  解析子元素replaced-method 方法替换 可以在运行时用新的方法替换现有的方法 而且还能动态的更改原有方法的逻辑 提取并进行记录
+  解析子元素constructor-arg 构造函数解析
+    解析Constructor-arg
+  解析子元素property parsePropertyElement方法  提取后使用propertyValue进行封装  记录在实例的propertyValues中
+  解析子元素qualifier 通过注入bean的名称来消除歧义
+  注册解析的BeanDefinition 完成解析  装饰等工作后进行注册  注册到BeanDefinitionRegistry类型实例中 此处分为两部分
+  通过BeanName注册和通过别名注册
+  BeanName注册 即将其放入map中使用BeanName作为key
+   对AbstractBeanDefinition的校验 methodOverrides属性校验
+   对beanName已注册情况的处理 若不允许bean的覆盖 则抛出异常 否则直接覆盖
+   加入map缓存
+   清楚解析前留下的beanName缓存
+  使用别名进行注册
+   别名和BeanName相同的情况的处理 相同的情况删除别名
+   覆盖处理 若别名已经使用并指向其他的beanName的处理
+   alias循环jiancha
+   注册alias
+  2.进一步解析其他所有属性并同一封装至GenericBeanDefinition类型实例中
+  3.如果检测到bean没有指定beanName 就使用默认规则生成name
+  4.将获取到的信息封装到BeanDefinitionHolder的实例中
+2.判断不为空后 需要对自定义标签进行解析
+3.对解析完成后的bdHolder进行注册 使用BeanDefinitionReaderUtils的registerBeanDefinition方法
+4.最后发出响应时间通知相关的监听器 这个bean已经加载完成了
+  fireComponentRegistered
 自定义采用custom
+
