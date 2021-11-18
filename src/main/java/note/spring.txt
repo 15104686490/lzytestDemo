@@ -53,5 +53,43 @@ parseBeanDefinitions 读取xml
 3.对解析完成后的bdHolder进行注册 使用BeanDefinitionReaderUtils的registerBeanDefinition方法
 4.最后发出响应时间通知相关的监听器 这个bean已经加载完成了
   fireComponentRegistered
+
+alias提供多个名称 可以使用alias标签来指定
+import
+导入模块的配置文件
+ 1.获取resource属性所表示的路径
+ 2.解析路径中系统属性，格式如${user.dir}
+ 3.判定location是绝对路径还是相对路径
+ 4.如果是绝对路径则地柜调用bean的解析过程 进行另一次的解析
+ 6.通知监听器 解析完成
+嵌入式beans的解析
+ 调用地柜beans的解析过程
 自定义采用custom
 
+自定义标签的解析
+自定义标签的使用
+
+bean加载
+spring加载bean的过程
+1.转换对应的beanName
+去除factoryBean的修饰符 取别名指定的最终的BeanName
+2.尝试从缓存中加载单例bean
+单例在同一个容器内只会加载一次 后续再获取bean 直接从单例缓存中获取了
+若不成功在从singletonFactories中加载
+3.bean实例化
+缓存你中取到的时原始bean状态 并不是最终的bean 需要从指定的factory-method方法中返回bean
+代码中getObjectForBeanInstance就是完成这个工作的
+4.原型模式的依赖检查
+循环依赖？
+5.检测parentBeanFactory
+如果没有缓存需要转到父类工厂去加载
+6.将存储xml配置文件的GernericBeanDefinition转换为RootBeanDefinition
+7.寻找依赖
+初始化过程中很可能会用到某些属性  而这些属性是动态配置的 并且配置成依赖于其他bean的 此时需要加载依赖的bean
+8.针对不同的scope进行加载
+根据配置执行不同的初始化策略
+9.类型转换
+程序到这里返回bean后基本已经结束了 根据设置的参数requiredType进行格式的转换
+
+FactoryBean的使用
+一般情况下spring通过反射机制 利用bean的class属性指定的实现类来实例化bean
