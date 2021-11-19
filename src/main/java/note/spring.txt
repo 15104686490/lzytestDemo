@@ -93,3 +93,92 @@ spring加载bean的过程
 
 FactoryBean的使用
 一般情况下spring通过反射机制 利用bean的class属性指定的实现类来实例化bean
+BeanFactory接口中定义的三个方法
+getObject 有factory创建bean实例 若isSinglrton返回为true则将实例放到spring容器中但实例缓存池中
+isSingleton 检查是否为单例
+getObjectType 返回创建的bean类型
+
+缓存中获取单例bean
+不同的map存储不同类型的bean
+singletonObjects 存储BeanName和bean实例 间的映射
+singletonFactories 用于保存BeanName和创建bean工厂间的 映射
+earlySingletonObjects 同样保存BeanName和bean实例之间的关系 与前面不同 一个单例bean放在此处后 创建过程中 就可以通过getBean获取到
+目的是检测循环引用
+registeredSingletons 用来保存目前已经注册的Bean
+
+从bean的实例中获取对象
+对工厂bean进行处理 得到最终的对象
+getObjectFromFactoryBean
+1.验证FactoryBean正确性
+2.对非FactoryBean不做任何出出力
+3.对bean进行转换
+4.将从Factory中解析bean的工作委托给getObjectFromFactoryBean
+
+获取单例
+主要洛基在ObjectFactory类型的实例中实现
+前面的准备处理包括
+1.检查缓存是否已经加载过
+2.若没有加载 则记录beanName的正在加载状态
+3.加载单例记录加载状态
+beforeSingletonCreation 记录加载转台 将正要创建的bean记录在缓存中 便于对循环依赖进行检测
+4.通过调用参数传入的ObjectFactory的个体Object实例化bean
+5.加载单例后的处理方法调用 当加载结束后需要溢出缓存中对该bean的正在加载状态记录
+6.将加载的结果缓存并删除bean过程中锁记录的各种辅助状态
+7.返回处理结果
+
+准备创建bean
+具体步骤
+1.根据设置的class属性或者根据className来解析Class
+2.对override属性进行标记及验证
+
+3.应用初始化前的后处理器 解析指定bean是否存在初始化前的短路操作
+
+4.创建bean
+
+循环依赖
+概念
+多个bean相互之间持有对方 且最终形成一个环  可能会导致内存溢出的情况
+解决方式
+1.构造器循环依赖
+2.setter循环依赖
+3.prototype范围的依赖处理
+
+创建bean
+doCreateBean
+1.如果是单例则需要首先清楚缓存
+2，实例化bean 将BeanDefinition转换为BeanWrapper
+   如果存在工厂方法则使用工厂方法进行初始化
+   多个构造函数的情况 根据参数锁定构造函数并进行初始化
+   如果不存在工厂方法也不存在有参数的构造函数 则使用默认的构造函数进行bean实例化
+3.MergedBeanDefinitionPostProcessor应用
+   bean合并后处理 AutoWired注解通过此方法实现注入类型的预解析
+4.依赖处理
+5.属性填充 将所有属性填充至bean的实例中
+6.循环依赖检查
+7.注册DisposableBean 如果注册了destroy-method 这里需要注册以便于在销毁的时候调用
+8.完成创建并返回
+创建bean实例
+createBeanIntance方法
+1.如果RootBeanDefinition中存在factoryMethodName属性 过着在配置文件中配置了工厂方法 那么会尝试使用InstantiateUsingFactoryMethod
+方法 根据配置来生成bean实例
+2.可能存在多个构造函数的情况 但参数是不同的 据此判断使用哪一个构造函数进行实例化
+此处利用缓存机制 如果解析过的直接取缓存 否则再次进行解析
+ spring中的实例创建分为两种情况 一种是通用的实例化 另一种是带有参数的实例化
+ autowireConstructor
+ 1.构造函数参数确定
+    根据explicitArgs参数判断 用户指定
+    缓存中获取 如果之前有分析过 缓存中会记录 则可以直接拿来用
+    配置文件获取
+ 2.构造函数的确定
+    根据参数的个数进行匹配
+    需要先获取参数的名称 两种方式 通过注解的方式直接获取 另一种方式是使用spring中的工具类ParameterNameDiscover来获取
+ 3，根据确定的构造函数转换对应的参数类型
+ 4.构造函数不确定性验证
+ 5.根据实例化策略以及得到的构造函数及构造函数参数实例化Bean
+instantiateBean
+实例化策略
+没有简单的使用反射
+如果有需要覆盖或替换的方法 使用cglib进行动态代理 在创建的同事将动态方法织如到类中
+若没有则直接反射
+
+
