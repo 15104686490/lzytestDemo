@@ -181,4 +181,11 @@ instantiateBean
 如果有需要覆盖或替换的方法 使用cglib进行动态代理 在创建的同事将动态方法织如到类中
 若没有则直接反射
 
+记录创建bean的ObjectFactory
+isSingleton 判断是否为单例
+isSingletonCurrentlyInCreation 创建状态 加载状态
+
+属性注入
+属性填充
+populateBean
 
