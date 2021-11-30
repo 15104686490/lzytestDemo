@@ -187,5 +187,73 @@ isSingletonCurrentlyInCreation 创建状态 加载状态
 
 属性注入
 属性填充
-populateBean
+populateBean方法的处理流程
+1.InstantiationAwareBeanPostProcessor处理器的postProcessAfterInstantiation函数的应用，
+此函数可以控制程序是否继续进行属性填充
+2.根据注入类型 根据名字或根据类型 name/type 提取依赖的bean 并同一存入PropertyValues中
+3.应用InstantiationAwareBeanPostProcessor处理器的postProcessPropertyValues方法，
+对属性获取完毕填充前对属性的再次处理 例如 RequiredAnnotationBeanPostProcessor类中
+对属性的验证
+4.将所有的PropertyValue中的属性填充至BeanWrapper中
+
+autowireByName 根据Name进行注入
+找出已经加载的bean 并递归实例化 进而加入到pvs中
+autowireByType 根据类型
+PropertyValue到此处已经完成了对所有注入属性的获取 但是获取的属性是以PropertyValue的形式存储的
+还没有应用到已经实例化的bean中  具体的操作在applyPropertyValues中实施
+
+Bean初始化
+bean配置中有一个init-method属性
+aware方法
+主要的目的是执初始化调用或一些必要的工作
+激活aware方法
+提供了一些相关的接口 实现这些的bean在初始化后悔获取一些相应的资源
+例如实现applicationContextAware的bean 初始化后会被注入applicationContext的实例
+
+处理器的应用BeanPostProcessor
+
+自定义的init方法
+实现InitializingBean接口 并在afterPropertiesSet中实现自己的初始化业务逻辑
+
+注册DisposableBean
+destroy-method 、 注册后处理器DestructionAwareBeanPostProcessor
+
+容器扩展功能
+applicationContext 对于 BeanFactory的 扩展
+两者都是用于加载bean但前者在包含后者全部功能的基础上 进行了扩展
+支持多个配置文件以数组的形式同时传入
+xml文件初始化步骤
+1.初始化前的准备工作 对系统属性或者环境变量进行准备及验证
+2.初始化BeanFactory进行xml文件读取 复用BeanFactory
+3.对BeanFactory进行各种功能的填充
+4.子类覆盖方法做额外的处理
+5.激活各种BeanFactory处理器
+6.注册拦截bean创建的bean处理器 这里只是注册 真正的调用实在getBean的时候
+7.为上下文初始化Message源 对不同的消息体进行国际化的处理
+8.初始化应用消息广播器 并放入applicationEventMulticaster bean中
+9.留给子类来初始化其他的bean
+10.在素有注册的bean中查找listener bean 注册到消息广播器中
+11.初始化剩下的单实例 非惰性
+12.完成刷新过程 通知声明周期处理器lifecycleProcessor刷新过程 同时发出ContextRefreshEvent通知别人
+
+环境准备
+prepareRefresh
+
+加载BeanFactory
+obtainFreshBeanFactory 获取BeanFactory
+1.创建DefaultListableBeanFactory
+2.指定序列化ID
+3.定制BeanFactory
+4.加载BeanDefinition
+5.使用全局变量记录BeanFactory类实例
+
+加载BeanDefinition
+
+功能扩展
+prepareBeanFactory
+
+添加applicationContextAwareProcessor处理器
+
+注册依赖
+
 
