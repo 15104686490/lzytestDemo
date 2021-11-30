@@ -35,3 +35,23 @@ Spring Cloud Gateway限流
 1.同服务器 数据库实例
 2.不同服务器 不同库 映射表
 
+如何解决读脏数据
+select语句会加锁吗？ mdl
+幻读？
+锁行 和锁范围
+in share mode
+隔离级别
+串行化和可重复读
+意向锁
+scheduleX
+熔断和限流的区别 窗口期  兜底方案
+单机部署和多机部署
+springboot约定大于配置  默认 标准化配置
+mybatis sql可控 #和$区别
+mybatis插件机制
+mybatis 缓存机制
+ES和mongDB 倒排索引
+
+序列化id 验证结构是否发生了更改
+jit
+
