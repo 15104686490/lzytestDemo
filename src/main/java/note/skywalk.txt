@@ -1,0 +1,168 @@
+skywalk
+
+javaagent
+本节主要介绍 SkyWalking 的 Java 代理插件开发过程中涉及的核心对象的基本概念，
+包括 Span、Trace Segment、ContextCarrier 和 ContextSnapshot。
+
+span
+span是分布式跟踪系统中一个非常重要的概念。 也可以理解为方法调用、程序块调用、RPC调用或数据库访问。
+如果您想了解更多关于 Span 的概念，您可以参考 Dapper 论文 (2010) 和 OpenTracing。
+
+SkyWalking 的 Span 概念与 Dapper 论文和 OpenTracing 类似，但有所扩展。
+Span 可以大致分为两类，LocalSpan 和 RemoteSpan，分别取决于它是跨线程还是跨进程跟踪。
+
+LocalSpan 代表一个普通的 Java 方法调用，与跨进程无关。 主要用于记录当前进程中的关键逻辑代码块，
+或者记录跨线程后异步线程执行的trace信息。
+
+RemoteSpan 可以进一步分为 EntrySpan 和 ExitSpan 两大类：
+• EntrySpan 代表一个应用服务提供者或服务器入口端点，如Web 容器的服务器入口、RPC 服务器的消费者、
+消息队列的消费者；
+
+• ExitSpan（在 SkyWalking 的早期版本中称为 LeafSpan）代表一个应用服务客户端或消息队列生产者，
+比如Redis客户端的Redis调用，MySQL客户端的数据库查询，RPC组件的请求，消息队列生产者产生的消息。
+
+Trace Segment
+Trace Segment 是 SkyWalking 独有的概念。 通常是指在支持多线程的语言中，
+属于同一个线程操作的所有 Span 的聚合。 这些 Span 具有相同的唯一标识符 SegmentID。
+Trace Segment对应的实体类位于
+org.apache.skywalking.apm.agent.core.context.trace.TraceSegment。 重要的属性如下：
+
+TraceSegmentId：此 Trace Segment 操作的唯一标识符。 它是使用雪花算法生成的，以确保全局唯一性。
+• Refs：此跟踪段的上游引用。 对于大多数上游 RPC 调用，Refs 只有一个元素。
+但是，在消息队列或者批处理框架的情况下，上游可能由多个应用服务组成，所以会有多个元素。
+• span：用于存储并且属于该跟踪段的跨度集。
+
+RelatedGlobalTraces：此跟踪段的跟踪 ID。 大多数情况下，它只包含一个元素。
+在消息队列或批处理框架的情况下，上游将由多个应用服务组成，从而产生多个元素。
+• 忽略：是否忽略。 如果 Ignore 为 true，则此 Trace Segment 将不会上传到
+SkyWalking 的后端。
+
+IsSizeLimited：对属于此跟踪段的 Span 数量的限制。
+初始大小可以通过 config.agent.span_limit_per_segment 参数进行配置。
+默认长度为300，如果超过配置值，在新建Span时会变成NoopSpan。
+NoopSpan 表示没有任何实际操作的 Span 实现，用于尽可能降低内存和 GC 的开销。
+• CreateTime：此跟踪段的创建时间。
+
+
+上下文载体
+分布式跟踪要解决的一个重要问题是跨进程调用跟踪的连接。
+ContextCarrier 就是为了解决这个问题而设计的。 假设有两个应用服务：客户端A和服务器B。
+当A调用B一次时，跨进程传播的步骤如下：
+1) 客户端 A 创建一个空的 ContextCarrier 。
+2）通过ContextManager#createExitSpan方法创建一个ExitSpan，
+或者在ContextCarrier中使用ContextManager#inject发送并在进程中初始化。
+3) 调用时使用ContextCarrier.items()将ContextCarrier的所有元素放入请求信息中，
+如HTTP HEAD、Dubbo RPC框架附件、消息队列Kafka的消息头等。
+4) ContextCarrier 随请求一起传送到服务器。
+5）Server B 接收到带有ContextCarrier 的请求，
+并提取出所有与ContextCarrier 相关的信息。
+6）通过ContextManager#createEntrySpan方法创建EntrySpan，
+或者使用ContextManager#extract建立分布式调用连接，即对服务器B和客户端A进行配对。
+
+上下文快照
+除了跨进程，还需要对跨线程的支持。 例如，异步线程（内存中的消息队列）在 Java 中很常见。
+跨线程和跨进程的相似之处在于都需要传播上下文。 它们唯一的区别是跨线程不需要序列化。
+以下是跨线程传播的步骤：
+1）使用ContextManager#capture方法获取ContextSnapshot对象。
+2）让子线程通过方法参数或者被已有参数携带来访问ContextSnapshot。
+3）在子线程中使用ContextManager#continued。
+
+核心对象相关API的使用
+在本节中，您将了解 SkyWalking 的 Java 代理插件开发中涉及的关键 API 的使用。
+这将帮助您掌握各个 API 的用法，并学习如何使用正确的 API 来完成 Java 代理插件的开发
+
+A. ContextCarrier#items
+在跨进程追踪的情况下，使用ContextCarrier#items完成两个进程的追踪数据管理。
+以HTTP请求为例，处理如下两种场景：
+
+ContextManager#createEntrySpan
+应用服务的提供者或服务器的接收者点，如Web容器的服务器入口、RPC服务器或消息队列的消费者，
+在被调用时必须创建一个EntrySpan。
+必须使用 ContextManager#createEntrySpan 来完成这样的过程。 相关代码如下：
+
+ContextManager#createEntrySpan API 有以下两个关键输入参数：
+
+operationName：定义这个EntrySpan的操作方法名称，比如HTTP接口的请求路径。
+请注意， operationName 必须是详尽无遗的。 比如RESTful接口匹配/path/{id}时，
+id的真实值一定不能记录。 这是因为 SkyWalking 上报数据时，
+会将 operationName 映射到本地字典表中，并使用 operationName 的映射值进行传输，
+既是为了减少 operationName 的长度，也是出于跟踪消息传输性能的考虑。
+因此，一定要保证操作名是穷尽的，否则字典表可能会变得过大。
+
+contextCarrier：为了允许跨进程跟踪，
+上游跟踪信息必须通过 ContextCarrier #items 与此跟踪配对。
+更多相关API的使用请参考ContextCarrier#items的使用。
+
+.ContextManager#extract
+在一个消息队列或者批处理框架中，因为上游由多个应用服务组成，所以有多个元素。
+在这种情况下，ContextManager#extract 用于将多个上游应用程序的跟踪信息与当前跟踪配对。
+以下代码展示了消息队列Kafka框架将多个上游应用程序trace捆绑在一起进行批处理的情况：
+
+.ContextManager#createExitSpan
+在应用服务客户端或消息队列生产者的发送端点上，例如Redis客户端的一次性内存访问、
+MySQL客户端的一次性数据库查询、RPC组件的一次性请求，
+当请求发生时，客户端进程必须使用 ContextManager#createExitSpan 来创建 ExitSpan。
+相关代码如下：
+
+ContextManager#createExitSpan API 具有以下三个关键输入参数：
+• operationName：定义此ExitSpan 的操作方法名称。 注意操作名必须是详尽无遗的，
+详细内容与ContextManager#createEntrySpan的输入参数操作名一致。
+• contextCarrier：为了跨进程跟踪，这个线程的跟踪信息与头部配对。
+更多相关API的使用请参考ContextCarrier#items的使用。
+• peer：ip:port 格式的下游地址。 如果下游系统无法下载代理，
+如Redis、MySQL等资源，则必须将所有下游地址以ip:port;ip:port格式写入peer参数中。
+
+.ContextManager#inject
+ContextManager#inject 是一个不太常用的 API。 您可以使用此 API 来控制 ExitSpan
+方法中 ContextManager#inject 的调用时间。
+
+.ContextManager#createLocalSpan
+为了跟踪进程中关键的本地逻辑代码块，或者启用异步线程执行的跟踪，
+使用ContextManager#createLocalSpan创建LocalSpan。 相关代码如下：
+
+operationName 是 ContextManager#createLocalSpan API 的关键输入参数。
+它定义了这个 LocalSpan 的操作方法的名称。 注意操作名必须是详尽无遗的，
+详细内容与ContextManager#createEntrySpan的输入参数操作名一致。
+
+.ContextManager#capture
+在跨进程进行跟踪时，我们需要传递父线程的跟踪快照。
+ContextManager#capture 用于获取快照。 快照通常通过参数修改数据或方法传递给子线程。
+获取当前线程快照的代码如下：
+
+.ContextManager#continued
+ContextManager#continued 用于连接父进程快照和子线程。 相关代码如下：
+
+.ContextManager#stopSpan
+无论使用哪种类型的 Span，都必须调用 stop 方法来结束对 Span 的跟踪。 相关代码如下：
+
+.ContextManager#isActive
+如果不确定当前线程中是否有未完成的Span，突然调用stop方法可能会导致agent不正常。
+该 API 可用于确定当前线程中是否存在活动的 Span。 相关代码如下：
+
+.ContextManager#activeSpan
+该 API 用于获取当前进程中的活动 Span。 相关代码如下：
+
+.AbstractSpan#setComponent
+组件是 Span 中的一个重要属性。 SkyWalking 支持的代理组件在文件
+org.apache.skywalking.apm.network.trace.component.ComponentsDefine
+和 /oap-server/server-core/src/test/resources/component-libraries.yml 中定义。
+将组件分配给 Span 需要使用 AbstractSpan#setComponent API。
+比如将Tomcat组件赋值给Span的代码如下：
+
+.AbstractSpan#setLayer
+layer可以理解为Span的简单展示，对于页面展示意义重大。
+目前 SkyWalking 中的 Layer 有五种类型，分别是：
+• SpanLayer.Database，代表数据库；
+• SpanLayer.RPCFramework，代表RPC 框架；
+• SpanLayer.Http，表示Web 服务器收到的HTTP 请求；
+• SpanLayer.MQ，代表消息队列； 和
+• SpanLayer.Cache，代表缓存数据库。
+例如，当前的 Span 组件是一个数据库类型的组件。 我们必须使用以下 API 来标记这个 Span：
+
+
+
+
+
+
+
+
