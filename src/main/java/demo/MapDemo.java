@@ -3,6 +3,9 @@ package demo;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * @author 45562
+ */
 public class MapDemo {
     public static void main(String[] args) {
         Map map =new HashMap();

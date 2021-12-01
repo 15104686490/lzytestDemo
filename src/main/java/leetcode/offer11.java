@@ -18,7 +18,9 @@ public class offer11 {
     }
     //深度
     public int dfs(int i, int j, int k, boolean[][] visited) {
-        if (i < 0 || j < 0 || i >= m || j >= n || visited[i][j] || cal(i) + cal(j) > k) return 0;
+        if (i < 0 || j < 0 || i >= m || j >= n || visited[i][j] || cal(i) + cal(j) > k) {
+            return 0;
+        }
         visited[i][j] = true;
         return 1 + dfs(i - 1, j, k, visited) + dfs(i + 1, j, k, visited)
                 + dfs(i, j - 1, k, visited) + dfs(i, j + 1, k, visited);
