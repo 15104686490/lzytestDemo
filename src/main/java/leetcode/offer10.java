@@ -9,7 +9,9 @@ public class offer10 {
         char[] words = word.toCharArray();
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[0].length; j++) {
-                if (dfs(board, words, i, j, 0)) return true;
+                if (dfs(board, words, i, j, 0)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -20,8 +22,11 @@ public class offer10 {
                 board[i][j] != word[k]) {
             return false;
         }
-        if (k == word.length - 1) return true;
-        board[i][j] = '\0'; // 标记该点已经访问过了
+        if (k == word.length - 1) {
+            return true;
+        }
+        // 标记该点已经访问过了
+        board[i][j] = '\0';
         boolean res = dfs(board, word, i + 1, j, k + 1) ||
                 dfs(board, word, i - 1, j, k + 1) ||
                 dfs(board, word, i, j + 1, k + 1) ||
