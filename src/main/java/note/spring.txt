@@ -308,6 +308,51 @@ findAdvisorsThatCanApply方法中
 
 创建代理
 获取对应bean的增强器后 创建代理
+spring代理类的创建以及处理委托给ProxyFactory处理
+此create函数中主要是对ProxyFactory的初始化操作 如下：
+1.获取当前类中的属性
+2.添加代理接口
+3.封装Advisor并加入到ProxyFactory中
+4.设置要代理的类
+5.为子类提供了定制的函数customizeProxyFactory 子类可以通过此函数对ProxyFactory进一步封装
+6.进行获获取代理的操作
+addAdvisor方法直接将增强器置入代理创建工厂中 但还需要将拦截器封装为增强器
+buildAdvisors  中添加拦截器  需要将拦截器转换为Advisor
+
+创建代理
+createProxy
+jdk和cglib两种如何选取
+代码中对几个条件进行了判断
+optmize 控制通过cglib创建代理 是否使用基金的优化策略 由用户进行设置 仅对cglib生效
+proxyTargetClass 目标本身被代理而不是目标类的接口 true使用cglib
+hasNoUserSuppliedProxyInterfaces 是否存在代理接口
+
+总结：
+如果目标对象实现了接口 默认情况下会采用jdk的动态代理实现aop
+存在实现接口的情况下 可强制使用cglib实现aop
+如果没有实现接口 必须采用cglib库 spring会自动在jdk和动态代理之间转换
+
+强制使用cglib
+添加cglib库
+设置proxy-target-class属性为true
+
+两者区别
+jdk动态代理只能对实现了接口的类生成代理 而不能针对类
+cglib是针对代理类 生成子类 覆盖其中的方法  由于是利用继承 所以该类或者方法最好不要声明成final
+
+获取代理
+jdk代理实例
+目标对象方法周围进行增强 spring aop实现使用了proxy和InvocationHandler
+过程中创建InvocationHandler的创建最为核心的
+构造函数传入代理的对象
+invoke方法 此方法中实现aop增强的所有逻辑
+getProxy方法
+
+cglib
+底层使用字节码处理框架asm 进行字节码转换并生成新的类
+
+
+
 
 
 
