@@ -6,6 +6,7 @@ import org.apache.flume.api.RpcClientFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,8 @@ public class TestDemo {
         List<Integer> res = list1.stream().filter(value -> (value > 2))
                 .collect(Collectors.toList());
         System.out.println(res);
+        ConcurrentHashMap concurrentHashMap = new ConcurrentHashMap();
+        concurrentHashMap.put("","");
 
 
         //RpcClientFactory.getInstance(new Properties());

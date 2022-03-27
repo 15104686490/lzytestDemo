@@ -40,6 +40,13 @@
             <version>1.12.6</version>
         </dependency>
 
+
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper</artifactId>
+            <version>5.0.3</version>
+        </dependency>
+
     </dependencies>
 
 </project>
